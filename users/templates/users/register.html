@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+    <title>Register Page</title>
+{% endblock %}
+
+{% block content %}
+    <div>
+        {% if field.errors %}
+            {{ field.errors }}
+        {% else %}
+            <b>Hi, plz register</b>
+        {% endif %}
+    </div>
+    <br>
+    <div>
+        <form action="{% url "register" %}" method="POST">
+            {% csrf_token %}
+            {{ form }}
+            <button> Submit </button>
+        </form>
+    </div>
+
+{% endblock %}
