@@ -6,6 +6,9 @@ from django.utils import timezone
 
 
 class RecursionRule(models.Model):
+    # this is not working as I think
+    # I think things should work like in book
+    # need to change
     class Frequency(models.TextChoices):
         DAILY = "daily", "Daily"
         WEEKLY = "weekly", "Weekly"
@@ -14,6 +17,21 @@ class RecursionRule(models.Model):
     interval = models.IntegerField(default=1)
     end_date = models.DateField(null=True, blank=True)
     days_of_week = ArrayField(models.IntegerField(), null=True, blank=True)
+
+    def __str__(self):
+        WEEK_DAYS_MAPPING = (
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        )
+        if self.days_of_week:
+            days = "".join([WEEK_DAYS_MAPPING[day] for day in self.days_of_week])
+            return f"Every {days}"
+        return f"{self.frequency.capitalize()}"
 
     class Meta:
         db_table = "tasks_recursion_rule"
@@ -27,10 +45,11 @@ class TaskTemplate(Timestamp):
         URGENT = 4, "Urgent"
         CRITICAL = 5, "Critical"
 
-    request_body = models.JSONField()
     created_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     assigned_users = ArrayField(models.IntegerField(), null=True, blank=True)
+    name = models.CharField(max_length=255, default="task")
     location = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     recursion_rule = models.ForeignKey(
         RecursionRule, on_delete=models.SET_NULL, null=True, blank=True
     )
@@ -56,7 +75,7 @@ class TaskInstance(Timestamp):
     template = models.ForeignKey(
         TaskTemplate, on_delete=models.PROTECT, related_name="instances"
     )
-    task_status = models.CharField(
+    status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
 
@@ -64,6 +83,6 @@ class TaskInstance(Timestamp):
         db_table = "tasks_task_instance"
         indexes = [
             models.Index(fields=["template", "created_at"]),
-            models.Index(fields=["task_status", "created_at"]),
+            models.Index(fields=["status", "created_at"]),
             models.Index(fields=["due_date"]),
         ]

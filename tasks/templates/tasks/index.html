@@ -1,16 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List</title>
-</head>
-<body>
-    <ul>
-        <li>todo 1</li>
-        <li>todo 2</li>
-        <li>todo 3</li>
-    </ul>
+{% extends "base.html" %}
+{% load static %}
 
-</body>
-</html>
+{% block title %}
+    <title>Todo Index</title>
+{% endblock %}
+
+{% block content %}
+    <b>Hello {{ user.name }}</b>
+    <br/>
+    <b>Stuff gonna show here</b>
+    <form action="{% url 'add_task' %}" method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <button>Add new task</button>
+    </form>
+    {% if task %}
+        <ul>
+            {% for instance in task %}
+                <li>
+                    <span>
+                        <b>{{ instance.template.name }}</b>
+                        {% if instance.template.location %}
+                            <p>
+                                Location: 
+                                {{ instance.template.location }}
+                            </p>
+                        {% endif %}
+
+                        {% if instance.template.desciption %}
+                            <p>
+                                Description: 
+                                {{ instance.template.desciption }}
+                            </p>
+                        {% endif %}
+                        <div>
+                            <div>
+                                <a id="completed-bt" href="#" data-instance-id="{{ instance.id }}">
+                                    Completed
+                                </a>
+                            </div>
+                            <div>
+                                <a id="completed-bt" href="#">Edit</a>
+                            </div>
+                            <div>
+                                <a href="#">Remove</a>
+                            </div>
+                        </div>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <br/>
+    <div>
+        {% if user.is_authenticated %}
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button>Log Out</button>
+          </form>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static "tasks/index.js" %}">
+    </script>
+{% endblock %}
