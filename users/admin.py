@@ -13,14 +13,23 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ("is_superuser",)
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        ("Name", {"fields": ("name",)}),
-        ("Last Login", {"fields": ("last_login",)}),
+        ("Personal Info", {"fields": ("name",)}),
+        (
+            "Permissions",
+            {"fields": ("is_superuser", "is_staff", "groups", "user_permissions")},
+        ),
+        ("Important Dates", {"fields": ("last_login",)}),
     )
-    readonly_fields = (
-        "email",
-        "name",
-        "last_login",
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "name", "password1", "password2"),
+            },
+        ),
     )
+    readonly_fields = ("last_login",)
     search_fields = (
         "email",
         "name",
