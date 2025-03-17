@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Todo!</title>
+{% endblock %}
+
+{% block content%}
+<b>Hi this is home page </b>
+</br>
+
+<a href="{% url 'login' %}"> Login Here!</a>
+</br>
+<a href="{% url 'register_page' %}">Sign up</a>
+{% endblock %}
