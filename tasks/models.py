@@ -45,6 +45,7 @@ class TaskTemplate(Timestamp):
         URGENT = 4, "Urgent"
         CRITICAL = 5, "Critical"
 
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     created_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     assigned_users = ArrayField(models.IntegerField(), null=True, blank=True)
     name = models.CharField(max_length=255, default="task")
@@ -70,8 +71,9 @@ class TaskInstance(Timestamp):
         IN_PROGRESS = "in_progress", "In progress"
         CANCELLED = "cancelled", "Cancelled"
 
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     due_date = models.DateTimeField(null=True, blank=True)
-    finished_time = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
     template = models.ForeignKey(
         TaskTemplate, on_delete=models.PROTECT, related_name="instances"
     )
