@@ -14,12 +14,17 @@
         {{ form }}
         <button>Add new task</button>
     </form>
-    {% if task %}
+    <br/>
+    {% if unfinished_tasks %}
+    <b>Todos!</b>
+    <div>
         <ul>
-            {% for instance in task %}
+            {% for instance in unfinished_tasks %}
                 <li>
                     <span>
                         <b>{{ instance.template.name }}</b>
+                        <br/>
+                        <b>Created at {{ instance.created_at }}</b>
                         {% if instance.template.location %}
                             <p>
                                 Location: 
@@ -27,10 +32,10 @@
                             </p>
                         {% endif %}
 
-                        {% if instance.template.desciption %}
+                        {% if instance.template.description %}
                             <p>
                                 Description: 
-                                {{ instance.template.desciption }}
+                                {{ instance.template.description }}
                             </p>
                         {% endif %}
                         <div>
@@ -48,10 +53,55 @@
                         </div>
                     </span>
                 </li>
+            </br>
             {% endfor %}
         </ul>
+    </div>
     {% endif %}
     <br/>
+    {% if finished_tasks %}
+    <b>Finished Tasks</b>
+        <div>
+            <ul>
+                {% for instance in finished_tasks %}
+                <li>
+                    <span>
+                        <b>{{ instance.template.name }}</b>
+                        <br/>
+                        <b>Finished at {{ instance.finished_at }}</b>
+                        {% if instance.template.location %}
+                            <p>
+                                Location: 
+                                {{ instance.template.location }}
+                            </p>
+                        {% endif %}
+
+                        {% if instance.template.description %}
+                            <p>
+                                Description: 
+                                {{ instance.template.description }}
+                            </p>
+                        {% endif %}
+                        <div>
+                            <div>
+                                <a id="completed-bt" href="#" data-instance-id="{{ instance.id }}">
+                                    Uncompleted
+                                </a>
+                            </div>
+                            <div>
+                                <a id="completed-bt" href="#">Edit</a>
+                            </div>
+                            <div>
+                                <a href="#">Remove</a>
+                            </div>
+                        </div>
+                    </span>
+                </li>
+                {% endfor %}
+            </br>
+            </ul>
+        </div>
+    {% endif %}
     <div>
         {% if user.is_authenticated %}
         <form action="{% url 'logout' %}" method="post">

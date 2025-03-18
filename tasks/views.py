@@ -3,33 +3,50 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View, ListView
 from django.http import HttpResponse
 from tasks.models import TaskTemplate, TaskInstance
-from django.utils import timezone
 from tasks.forms import TaskTemplateWithInstanceForm
-from datetime import datetime, time
 from django.db.models import Q
 import json
 from http import HTTPStatus
+from django.utils import timezone
+from core.util import get_day_time_range
 
 
 class TaskView(LoginRequiredMixin, View):
     def get(self, request):
         """
-        how to deal with recursive tasks?
+        TODO:
+        1. do a cancel bt to change the status
+        2. how to deal with recursive tasks?
         """
-        today = timezone.now().date()
-        start_of_day = timezone.make_aware(datetime.combine(today, time.min))
-        end_of_day = timezone.make_aware(datetime.combine(today, time.max))
-        # filter task today or not finished
-        tasks = (
-            TaskInstance.objects.filter(template__created_user=request.user)
-            .filter(
-                Q(created_at__gte=start_of_day, created_at__lte=end_of_day)
-                | Q(finished_time__isnull=True)
+
+        """
+        go back to check your test
+        """
+        start_of_day, end_of_day = get_day_time_range(timezone.now().date())
+
+        query = (
+            TaskInstance.objects.filter(
+                template__created_user=request.user,
             )
             .select_related("template")
             .order_by("created_at")
+            .exclude(status=TaskInstance.Status.CANCELLED)
         )
-        context = {"form": TaskTemplateWithInstanceForm(), "task": tasks}
+
+        finished_tasks = query.filter(
+            status=TaskInstance.Status.COMPLETED,
+            finished_at__range=(start_of_day, end_of_day),
+        ).order_by("-finished_at")
+
+        unfinished_tasks = query.exclude(status=TaskInstance.Status.COMPLETED).order_by(
+            "-template__priority"
+        )
+
+        context = {
+            "form": TaskTemplateWithInstanceForm(),
+            "finished_tasks": finished_tasks,
+            "unfinished_tasks": unfinished_tasks,
+        }
         return render(request, "tasks/index.html", context)
 
     def post(self, request):
@@ -47,14 +64,16 @@ class TaskView(LoginRequiredMixin, View):
         request = json.loads(request.body)
 
         task_instance = TaskInstance.objects.get(pk=instance_id)
-        status = request.get("status", None)
+        task_status = request.get("status", None)
 
-        if status and status in TaskInstance.Status:
-            task_instance.status = status
-            task_instance.finished_time = timezone.now()
-            task_instance.save()
+        if not task_status or task_status not in TaskInstance.Status:
+            return HttpResponse(status=HTTPStatus.BAD_REQUEST)
 
-            return HttpResponse(status=HTTPStatus.NO_CONTENT)
+        task_instance.status = task_status
+        task_instance.finished_at = timezone.now()
+        task_instance.save()
+
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
     # model = TaskInstance
     # context_object_name = "task_instance"
