@@ -1,5 +1,5 @@
 from django.urls import path
-from tasks.views import TaskView
+from tasks.views import TaskView, TaskRecursionCheckView
 
 urlpatterns = [
     path("", TaskView.as_view(), name="task_index"),
@@ -7,7 +7,13 @@ urlpatterns = [
     path(
         "update/<int:instance_id>",
         TaskView.as_view(),
-        name="update_instance_status",
+        name="patch_task",
+    ),
+    path("delete/<int:instance_id>", TaskView.as_view(), name="delete_task"),
+    path(
+        "check_recursion/<int:instance_id>",
+        TaskRecursionCheckView.as_view(),
+        name="check_recursion",
     ),
 ]
 

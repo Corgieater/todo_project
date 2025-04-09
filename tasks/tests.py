@@ -1,5 +1,5 @@
 from django.test import TestCase
-from tasks.models import CustomUser, TaskTemplate, TaskInstance
+from tasks.models import CustomUser, TaskTemplate, TaskInstance, RecursionRule
 from datetime import date, timedelta
 from tasks.forms import TaskTemplateWithInstanceForm
 from django.urls import reverse
@@ -9,14 +9,19 @@ import json
 
 
 class TaskTemplateWithInstanceFormTest(TestCase):
+    """
+    NOTE:
+    Add invalidate tests?
+    """
+
     def setUp(self):
         self.user = CustomUser.objects.create_user(
-            email="user@example.com",
-            name="test",
+            email="test1@test.com",
+            name="test1",
             password="abcd4321",
         )
 
-    def test_valid_form_creates_task_and_instance_ok(self):
+    def test_valid_form_creates_task_and_instance_200_ok(self):
         form_data = {
             "name": "Test Task",
             "description": "Test Description",
@@ -39,9 +44,9 @@ class TaskTemplateWithInstanceFormTest(TestCase):
 class TaskViewTest(TestCase):
     def setUp(self):
         self.user = CustomUser.objects.create_user(
-            email="user@example.com", name="test", password="abcd4321"
+            email="test1@test.com", name="test1", password="abcd4321"
         )
-        self.client.login(email="user@example.com", password="abcd4321")
+        self.client.login(email="test1@test.com", password="abcd4321")
 
         # Set an unfinished task
         self.unfinished_task_template = TaskTemplate.objects.create(
@@ -74,6 +79,15 @@ class TaskViewTest(TestCase):
             finished_at=timezone.now(),
             status=TaskInstance.Status.COMPLETED,
         )
+
+        # Set another user and it's related task
+        self.another_user = CustomUser.objects.create_user(
+            email="test2@test.com", name="test2", password="abcd4321"
+        )
+        self.another_template = TaskTemplate.objects.create(
+            created_user=self.another_user, name="another user task"
+        )
+        self.another_task = TaskInstance.objects.create(template=self.another_template)
 
     def test_get_task_instance_200_ok(self):
         url = reverse("task_index")
@@ -127,3 +141,92 @@ class TaskViewTest(TestCase):
         self.unfinished_task_instance.refresh_from_db()
 
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
+
+    def test_patch_update_task_instance_status_404_not_found(self):
+        url = reverse("patch_task", args=[9999999999])
+        data = {"status": TaskInstance.Status.COMPLETED}
+        response = self.client.patch(
+            url, data=json.dumps(data), content_type="application/json"
+        )
+        self.unfinished_task_instance.refresh_from_db()
+
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
+
+
+class TaskCancellTest(TestCase):
+    """
+    check if the user are nor the creater to do delete to, it should fail
+    """
+
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            email="test1@test.com", name="test1", password="abcd4321"
+        )
+        self.client.login(email="test1@test.com", password="abcd4321")
+
+        # set non-repreated task
+        self.non_repeat_task_template = TaskTemplate.objects.create(
+            created_user=self.user, name="no repeat"
+        )
+        self.non_repeat_task = TaskInstance.objects.create(
+            template=self.non_repeat_task_template
+        )
+
+        # set repeated task
+        self.repeat_task_template = TaskTemplate.objects.create(
+            created_user=self.user,
+            name="repeat",
+            recursion_rule=RecursionRule.objects.get(id=1),
+        )
+        self.repeat_task = TaskInstance.objects.create(
+            template=self.repeat_task_template
+        )
+
+    def test_soft_delete_non_repeat_task_status_204_no_content(self):
+        url = reverse("delete_task", args=[self.non_repeat_task.id])
+        data = {"body": {"delete_future_tasks": False}}
+        response = self.client.delete(
+            url, data=json.dumps(data), content="application/json"
+        )
+        non_repeat_task_template = TaskTemplate.objects.get(
+            id=self.non_repeat_task.template.id
+        )
+        non_repeat_task_instance = TaskInstance.objects.get(id=self.non_repeat_task.id)
+        self.assertIsNotNone(non_repeat_task_instance.deleted_at)
+        self.assertEqual(TaskInstance.Status.CANCELLED, non_repeat_task_instance.status)
+        self.assertIsNotNone(non_repeat_task_template.deleted_at)
+        self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
+
+    def test_soft_delete_repeat_task_and_future_tasks_status_204_no_content(self):
+        url = reverse("delete_task", args=[self.repeat_task.id])
+        data = {"body": {"delete_future_tasks": True}}
+        response = self.client.delete(
+            url, data=json.dumps(data), content="application/json"
+        )
+        repeat_task_template = TaskTemplate.objects.get(id=self.repeat_task.template.id)
+        repeat_task_instance = TaskInstance.objects.get(id=self.repeat_task.id)
+        self.assertIsNotNone(repeat_task_instance.deleted_at)
+        self.assertEqual(TaskInstance.Status.CANCELLED, repeat_task_instance.status)
+        self.assertIsNotNone(repeat_task_template.deleted_at)
+        self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
+
+    def test_soft_delete_repeat_task_only_this_time_status_204_no_content(self):
+        url = reverse("delete_task", args=[self.repeat_task.id])
+        data = {"body": {"delete_future_tasks": False}}
+        response = self.client.delete(
+            url, data=json.dumps(data), content="application/json"
+        )
+        repeat_task_template = TaskTemplate.objects.get(id=self.repeat_task.template.id)
+        repeat_task_instance = TaskInstance.objects.get(id=self.repeat_task.id)
+        self.assertIsNotNone(repeat_task_instance.deleted_at)
+        self.assertEqual(TaskInstance.Status.CANCELLED, repeat_task_instance.status)
+        self.assertIsNone(repeat_task_template.deleted_at)
+        self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
+
+    def test_soft_delete_non_repeat_task_status_404_not_found(self):
+        url = reverse("delete_task", args=[999999999])
+        data = {"body": {"delete_future_tasks": False}}
+        response = self.client.delete(
+            url, data=json.dumps(data), content="application/json"
+        )
+        self.assertEqual(HTTPStatus.NOT_FOUND, response.status_code)

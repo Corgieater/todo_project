@@ -48,7 +48,7 @@
                                 <a id="completed-bt" href="#">Edit</a>
                             </div>
                             <div>
-                                <a href="#">Remove</a>
+                                <a id="cancell-bt" href="#" data-instance-id="{{ instance.id }}">Cancell</a>
                             </div>
                         </div>
                     </span>
@@ -84,15 +84,9 @@
                         {% endif %}
                         <div>
                             <div>
-                                <a id="completed-bt" href="#" data-instance-id="{{ instance.id }}">
+                                <a id="un-completed-bt" href="#" data-instance-id="{{ instance.id }}">
                                     Uncompleted
                                 </a>
-                            </div>
-                            <div>
-                                <a id="completed-bt" href="#">Edit</a>
-                            </div>
-                            <div>
-                                <a href="#">Remove</a>
                             </div>
                         </div>
                     </span>
