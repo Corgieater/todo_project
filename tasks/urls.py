@@ -3,17 +3,17 @@ from tasks.views import TaskView, TaskRecursionCheckView
 
 urlpatterns = [
     path("", TaskView.as_view(), name="task_index"),
-    path("add/", TaskView.as_view(), name="add_task"),
+    path("", TaskView.as_view(), name="task_create"),
     path(
-        "update/<int:instance_id>",
+        "<int:instance_id>",
         TaskView.as_view(),
-        name="patch_task",
+        name="task_update",
     ),
-    path("delete/<int:instance_id>", TaskView.as_view(), name="delete_task"),
+    path("<int:instance_id>", TaskView.as_view(), name="task_delete"),
     path(
-        "check_recursion/<int:instance_id>",
+        "<int:instance_id>/task_check_recursion",
         TaskRecursionCheckView.as_view(),
-        name="check_recursion",
+        name="task_check_recursion",
     ),
 ]
 

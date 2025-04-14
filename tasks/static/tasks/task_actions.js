@@ -1,7 +1,7 @@
 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
 export async function patchTaskStatus(instanceId, taskStatus) {
-    const url = `/tasks/update/${instanceId}`
+    const url = `/tasks/${instanceId}`
     const response = await fetch(url, {
       method: 'PATCH',
       headers: {
@@ -21,7 +21,7 @@ export async function patchTaskStatus(instanceId, taskStatus) {
   }
   
   export async function checkTaskRecursion(instanceId) {
-    const url = `/tasks/check_recursion/${instanceId}`
+    const url = `/tasks/${instanceId}/task_check_recursion`
     const response = await fetch(url);
   
     if (!response.ok) {
@@ -32,7 +32,7 @@ export async function patchTaskStatus(instanceId, taskStatus) {
   }
   
   export async function deleteTask(instanceId, removeFutureTask = false) {
-    let url = `/tasks/delete/${instanceId}`;
+    let url = `/tasks/${instanceId}`;
     let body = { 'delete_future_tasks': false };
   
     if (removeFutureTask) {

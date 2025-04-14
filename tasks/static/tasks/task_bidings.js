@@ -2,7 +2,8 @@ import { patchTaskStatus, checkTaskRecursion, deleteTask } from './task_actions.
 
 const completedBts = document.querySelectorAll('#completed-bt');
 const unCompletedBts = document.querySelectorAll('#un-completed-bt');
-const cancellBts = document.querySelectorAll('#cancell-bt')
+const cancellBts = document.querySelectorAll('#cancell-bt');
+const editBts = document.querySelectorAll('#edit-bt');
 
 
 if (completedBts) {
@@ -45,6 +46,19 @@ if (cancellBts) {
         // do request delete it directly
         deleteTask(instanceId, false);
       }
+    })
+  })
+}
+
+// do Edit bts
+if (editBts) {
+  editBts.forEach(bt => {
+    bt.addEventListener('click', async function (e) {
+      e.preventDefault();
+      const instanceId = this.getAttribute('data-instance-id');
+      console.log('edit this', instanceId);
+      
+      // await patchTaskStatus(instanceId, 'pending');
     })
   })
 }
