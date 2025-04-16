@@ -117,7 +117,7 @@ class TaskViewTest(TestCase):
         self.assertEqual(response.context["finished_tasks"].count(), 0)
 
     def test_patch_update_task_instance_status_200_ok(self):
-        url = reverse("patch_task", args=[self.unfinished_task_instance.id])
+        url = reverse("task_update", args=[self.unfinished_task_instance.id])
         data = {"status": TaskInstance.Status.COMPLETED}
 
         response = self.client.patch(
@@ -133,7 +133,7 @@ class TaskViewTest(TestCase):
         self.assertIsNotNone(self.unfinished_task_instance.finished_at)
 
     def test_patch_update_task_instance_status_400_bad_request(self):
-        url = reverse("patch_task", args=[self.unfinished_task_instance.id])
+        url = reverse("task_update", args=[self.unfinished_task_instance.id])
         data = {"status": "Invalid Status"}
         response = self.client.patch(
             url, data=json.dumps(data), content_type="application/json"
@@ -143,7 +143,7 @@ class TaskViewTest(TestCase):
         self.assertEqual(response.status_code, HTTPStatus.BAD_REQUEST)
 
     def test_patch_update_task_instance_status_404_not_found(self):
-        url = reverse("patch_task", args=[9999999999])
+        url = reverse("task_update", args=[9999999999])
         data = {"status": TaskInstance.Status.COMPLETED}
         response = self.client.patch(
             url, data=json.dumps(data), content_type="application/json"
@@ -183,10 +183,11 @@ class TaskCancellTest(TestCase):
         )
 
     def test_soft_delete_non_repeat_task_status_204_no_content(self):
-        url = reverse("delete_task", args=[self.non_repeat_task.id])
-        data = {"body": {"delete_future_tasks": False}}
+        "None repeat task should delete the template along too"
+        url = reverse("task-instance-detail", args=[self.non_repeat_task.id])
+        data = {"delete_future_tasks": False}
         response = self.client.delete(
-            url, data=json.dumps(data), content="application/json"
+            url, data=json.dumps(data), content_type="application/json"
         )
         non_repeat_task_template = TaskTemplate.objects.get(
             id=self.non_repeat_task.template.id
@@ -198,10 +199,10 @@ class TaskCancellTest(TestCase):
         self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
 
     def test_soft_delete_repeat_task_and_future_tasks_status_204_no_content(self):
-        url = reverse("delete_task", args=[self.repeat_task.id])
-        data = {"body": {"delete_future_tasks": True}}
+        url = reverse("task-instance-detail", args=[self.repeat_task.id])
+        data = {"delete_future_tasks": True}
         response = self.client.delete(
-            url, data=json.dumps(data), content="application/json"
+            url, data=json.dumps(data), content_type="application/json"
         )
         repeat_task_template = TaskTemplate.objects.get(id=self.repeat_task.template.id)
         repeat_task_instance = TaskInstance.objects.get(id=self.repeat_task.id)
@@ -211,10 +212,10 @@ class TaskCancellTest(TestCase):
         self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
 
     def test_soft_delete_repeat_task_only_this_time_status_204_no_content(self):
-        url = reverse("delete_task", args=[self.repeat_task.id])
-        data = {"body": {"delete_future_tasks": False}}
+        url = reverse("task-instance-detail", args=[self.repeat_task.id])
+        data = {"delete_future_tasks": False}
         response = self.client.delete(
-            url, data=json.dumps(data), content="application/json"
+            url, data=json.dumps(data), content_type="application/json"
         )
         repeat_task_template = TaskTemplate.objects.get(id=self.repeat_task.template.id)
         repeat_task_instance = TaskInstance.objects.get(id=self.repeat_task.id)
@@ -224,9 +225,9 @@ class TaskCancellTest(TestCase):
         self.assertEqual(HTTPStatus.NO_CONTENT, response.status_code)
 
     def test_soft_delete_non_repeat_task_status_404_not_found(self):
-        url = reverse("delete_task", args=[999999999])
-        data = {"body": {"delete_future_tasks": False}}
+        url = reverse("task-instance-detail", args=[999999999])
+        data = {"delete_future_tasks": False}
         response = self.client.delete(
-            url, data=json.dumps(data), content="application/json"
+            url, data=json.dumps(data), content_type="application/json"
         )
         self.assertEqual(HTTPStatus.NOT_FOUND, response.status_code)

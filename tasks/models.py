@@ -52,7 +52,10 @@ class TaskTemplate(Timestamp):
     location = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     recursion_rule = models.ForeignKey(
-        RecursionRule, on_delete=models.SET_NULL, null=True, blank=True
+        RecursionRule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
     priority = models.IntegerField(choices=Priority.choices, default=Priority.MEDIUM)
 
@@ -88,3 +91,11 @@ class TaskInstance(Timestamp):
             models.Index(fields=["status", "created_at"]),
             models.Index(fields=["due_date"]),
         ]
+
+    def soft_delete(self, delete_template):
+        self.deleted_at = timezone.now()
+        self.status = TaskInstance.Status.CANCELLED
+        self.save()
+
+        if delete_template:
+            self.template.soft_delete()

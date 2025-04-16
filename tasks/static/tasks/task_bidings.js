@@ -38,7 +38,6 @@ if (cancellBts) {
         // if recursive task
         if (confirm("Do you want to remove all future tasks?")) {
           // remove all future tasks
-          console.log("i will remove all of future tasks!")
           deleteTask(instanceId, true);
         }
       } else {
@@ -57,8 +56,6 @@ if (editBts) {
       e.preventDefault();
       const instanceId = this.getAttribute('data-instance-id');
       console.log('edit this', instanceId);
-      
-      // await patchTaskStatus(instanceId, 'pending');
     })
   })
 }

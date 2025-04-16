@@ -1,4 +1,6 @@
 const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+// NOTE:
+// Deal with those errors, it should not be see in frontend
 
 export async function patchTaskStatus(instanceId, taskStatus) {
     const url = `/tasks/${instanceId}`
@@ -21,23 +23,20 @@ export async function patchTaskStatus(instanceId, taskStatus) {
   }
   
   export async function checkTaskRecursion(instanceId) {
-    const url = `/tasks/${instanceId}/task_check_recursion`
+    const url = `/tasks/${instanceId}`
     const response = await fetch(url);
   
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
     const data = await response.json();
-    return data.is_recursive;
+    console.log(data);
+    return data.recursion_rule;
   }
   
   export async function deleteTask(instanceId, removeFutureTask = false) {
     let url = `/tasks/${instanceId}`;
-    let body = { 'delete_future_tasks': false };
-  
-    if (removeFutureTask) {
-      body['delete_future_tasks'] = true;
-    }
+    let body = { 'delete_future_tasks': removeFutureTask };
   
     const response = await fetch(url, {
       method: 'DELETE',
